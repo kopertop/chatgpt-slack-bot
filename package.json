@@ -8,11 +8,12 @@
 		"deploy": "sst deploy",
 		"remove": "sst remove",
 		"console": "sst console",
-		"prelint": "tsc --target ESNext --moduleResolution node .eslintrc.ts",
+		"prelint": "tsc --target ESNext --moduleResolution node .eslintrc.ts && mv .eslintrc.js .eslintrc.mjs",
 		"lint": "eslint *.ts stacks/**/*.ts packages/**/*.ts",
 		"lint:fix": "eslint *.ts stacks/**/*.ts packages/**/*.ts --fix",
 		"typecheck": "tsc --noEmit --project tsconfig.json",
-		"version": "npm version"
+		"version": "npm version",
+		"postinstall": "pnpm run prelint"
 	},
 	"repository": {
 		"type": "git",

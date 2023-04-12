@@ -10,3 +10,8 @@ node_modules
 
 # local env files
 .env*.local
+
+# built eslint file
+.eslintrc.mjs
+.eslintrc.cjs
+.eslintrc.js

@@ -1,6 +1,9 @@
 import { SSTConfig } from 'sst';
+import { AfterDeploy } from './stacks/after-deploy';
 
-import { API } from './stacks/MyStack';
+import { API } from './stacks/slack-bot';
+
+
 
 export default {
 	config(_input) {
@@ -11,5 +14,6 @@ export default {
 	},
 	stacks(app) {
 		app.stack(API);
+		app.stack(AfterDeploy);
 	},
 } satisfies SSTConfig;
