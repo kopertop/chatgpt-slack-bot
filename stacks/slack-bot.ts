@@ -11,10 +11,12 @@ export function API({ stack }: StackContext) {
 		defaults: {
 			function: {
 				timeout: 5,
+				architecture: 'arm_64',
+				runtime: 'nodejs18.x',
 			},
 		},
 		routes: {
-			'ANY /': 'packages/functions/src/webhook.handler',
+			'$default': 'packages/functions/src/webhook.handler',
 		},
 	});
 
@@ -29,6 +31,9 @@ export function API({ stack }: StackContext) {
 
 	const gptJob = new SSTFunction(stack, 'gptJob', {
 		handler: 'packages/functions/src/gpt.handler',
+		timeout: 30,
+		architecture: 'arm_64',
+		runtime: 'nodejs18.x',
 	});
 	gptJob.bind([SLACK_CONFIG, OPENAI_KEY, bucket]);
 
