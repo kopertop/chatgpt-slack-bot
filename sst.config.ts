@@ -1,6 +1,6 @@
 import { SSTConfig } from 'sst';
-import { AfterDeploy } from './stacks/after-deploy';
 
+import { AfterDeploy } from './stacks/after-deploy';
 import { API } from './stacks/slack-bot';
 
 

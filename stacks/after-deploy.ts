@@ -1,4 +1,5 @@
 import { Script, StackContext, use } from 'sst/constructs';
+
 import { API } from './slack-bot';
 
 export function AfterDeploy({ stack }: StackContext) {
