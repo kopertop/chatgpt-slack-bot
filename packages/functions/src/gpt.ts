@@ -7,7 +7,8 @@ import type { ChatCompletionRequestMessage } from 'openai/dist/api';
 import { Bucket } from 'sst/node/bucket';
 import { Config } from 'sst/node/config';
 
-const SYSTEM_PROMPT = 'You are a helpful assistant.';
+const GPT_MODEL = process.env.GPT_MODEL || 'gpt-3.5-turbo';
+const SYSTEM_PROMPT = `You are a helpful assistant, running GPT Model ${GPT_MODEL}.`;
 const FORMAT_RESPONSE = 'Your responses are sent to Slack, so always respond using Markdown formatting.';
 
 // Regular expression to identify System Prompts as submitted as a chat message
@@ -17,6 +18,7 @@ const SYSTEM_PROMPT_REGEX = /^(<@[A-Z0-9]+> )?You are /i;
 const IMAGE_PROMPT_REGEX = /^(<@[A-Z0-9]+> )?(generate|create|make) an? image (of )?(?<prompt>.+)/i;
 
 const s3 = new S3();
+
 
 export async function handler(payload: SlackEvent) {
 	const slackConfig = JSON.parse(Config.SLACK_CONFIG);
@@ -134,7 +136,7 @@ export async function handler(payload: SlackEvent) {
 		});
 
 		const completion = await openai.createChatCompletion({
-			model: 'gpt-3.5-turbo',
+			model: GPT_MODEL,
 			messages,
 			frequency_penalty: 0.1,
 			max_tokens: 512,

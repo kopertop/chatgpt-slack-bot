@@ -41,3 +41,15 @@ Upload the secrets for your slack app to AWS by using `npx sst secrets set SLACK
 All of these values should be available in the https://api.slack.com portal, most of them under
 "Basic Information", however the BOT_TOKEN will be under "OAuth & Permissions". It specifically is
 called "Bot User OAuth Token" and should start with `xoxb-`
+
+
+## Changing the GPT MOdel
+
+You can change the GPT model by setting the `GPT_MODEL` environment variable, for example
+
+```bash
+GPT_MODEL=gpt-4 pnpm sst deploy --stage prod
+```
+
+The default model uses `gpt-3.5-turbo`, which is currently on a waitlist. If you have access to
+GPT-4, consider setting this environment variable.

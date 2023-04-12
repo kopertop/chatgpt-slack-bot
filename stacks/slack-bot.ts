@@ -34,6 +34,10 @@ export function API({ stack }: StackContext) {
 		timeout: 30,
 		architecture: 'arm_64',
 		runtime: 'nodejs18.x',
+		environment: {
+			// Allow overriding the GPT model
+			GPT_MODEL: process.env.GPT_MODEL || 'gpt-3.5-turbo',
+		},
 	});
 	gptJob.bind([SLACK_CONFIG, OPENAI_KEY, bucket]);
 
