@@ -15,3 +15,5 @@ node_modules
 .eslintrc.mjs
 .eslintrc.cjs
 .eslintrc.js
+manifest.js
+manifest.json

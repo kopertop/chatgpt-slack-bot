@@ -2,6 +2,7 @@
 	"extends": "@tsconfig/node16/tsconfig.json",
 	"include": [
 		"**/*.ts",
+		"*.ts",
 		".*.ts"
 	],
 	"compilerOptions": {
