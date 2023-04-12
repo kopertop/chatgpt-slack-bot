@@ -1,0 +1,22 @@
+{
+	"name": "@chatgpt-slack-bot/functions",
+	"version": "1.0.0",
+	"type": "module",
+	"scripts": {
+		"test": "sst bind vitest",
+		"typecheck": "tsc -noEmit",
+		"version": "npm version"
+	},
+	"devDependencies": {
+		"@types/aws-lambda": "^8.10.114",
+		"@types/node": "^18.15.11",
+		"barrelsby": "^2.5.1",
+		"sst": "^2.3.6"
+	},
+	"dependencies": {
+		"@slack/bolt": "^3.12.2",
+		"aws-sdk": "^2.1350.0",
+		"node-fetch": "^3.3.1",
+		"openai": "^3.2.1"
+	}
+}

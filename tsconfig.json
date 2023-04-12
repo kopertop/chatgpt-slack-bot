@@ -1,0 +1,19 @@
+{
+	"extends": "@tsconfig/node16/tsconfig.json",
+	"include": [
+		"**/*.ts",
+		".*.ts"
+	],
+	"compilerOptions": {
+		"esModuleInterop": true,
+		"allowSyntheticDefaultImports": true,
+		"skipDefaultLibCheck": true,
+		"skipLibCheck": true,
+		"noImplicitAny": false,
+		"paths": {
+			"@chatgpt-slack-bot/core/*": [
+				"./packages/core/src/*"
+			]
+		}
+	}
+}
