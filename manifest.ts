@@ -22,7 +22,7 @@ async function create() {
 				'ChatGPT is a helpful AI assistant that uses the OpenAI GPT-3.5-tubo model to respond to your questions.',
 				'Using the /gpt slash command will return a one-line response to your PERSONAL question (not shared), while tagging @chatgpt will allow it to respond PUBLICLY to your response.',
 				'Follow-up messages may also be routed to ChatGPT',
-			],
+			].join('\r\n\r\n'),
 		},
 		'features': {
 			'bot_user': {
