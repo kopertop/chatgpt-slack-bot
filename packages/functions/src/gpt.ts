@@ -19,12 +19,11 @@ const IMAGE_PROMPT_REGEX = /^(<@[A-Z0-9]+> )?(generate|create|make) an? image (o
 
 const s3 = new S3();
 
-
 export async function handler(payload: SlackEvent) {
-	const slackConfig = JSON.parse(Config.SLACK_CONFIG);
+	const slack_config = JSON.parse(Config.SLACK_CONFIG);
 	const app = new App({
-		token: slackConfig.BOT_TOKEN,
-		signingSecret: slackConfig.SIGNING_SECRET,
+		token: slack_config.BOT_TOKEN,
+		signingSecret: slack_config.SIGNING_SECRET,
 	});
 	const openai = new OpenAIApi(new Configuration({
 		apiKey: Config.OPENAI_KEY,
@@ -34,19 +33,19 @@ export async function handler(payload: SlackEvent) {
 		role: 'system',
 		content: SYSTEM_PROMPT,
 	}];
-	const channelID = payload.channel || payload.channel_id;
-	let hasSystemPrompt = false;
+	const channel_id = payload.channel || payload.channel_id;
+	let has_system_prompt = false;
 
 	// Include previously sent messages
-	if (payload.thread_ts && channelID) {
+	if (payload.thread_ts && channel_id) {
 		const result = await app.client.conversations.replies({
-			channel: channelID,
+			channel: channel_id,
 			ts: payload.thread_ts,
 		});
 		for (const message of result.messages || []) {
 			if (message.text) {
 				if (SYSTEM_PROMPT_REGEX.test(message.text.trim())) {
-					hasSystemPrompt = true;
+					has_system_prompt = true;
 					messages.push({
 						role: 'system',
 						content: message.text,
@@ -71,10 +70,10 @@ export async function handler(payload: SlackEvent) {
 	let text = '';
 
 	// Allow producing an Image instead of text
-	const imagePrompt = IMAGE_PROMPT_REGEX.exec(payload.text);
-	if (imagePrompt?.groups?.prompt) {
+	const image_prompt = IMAGE_PROMPT_REGEX.exec(payload.text);
+	if (image_prompt?.groups?.prompt) {
 		const image = await openai.createImage({
-			prompt: imagePrompt.groups.prompt,
+			prompt: image_prompt.groups.prompt,
 			n: 1,
 			size: '512x512',
 			response_format: 'b64_json',
@@ -88,7 +87,7 @@ export async function handler(payload: SlackEvent) {
 				if (item?.b64_json) {
 					// Upload to S3
 					const key = `${payload.ts || payload.thread_ts}.png`;
-					const s3Key = s3.putObject({
+					const s3_key = s3.putObject({
 						Bucket: Bucket.images.bucketName,
 						Key: key,
 						Body: Buffer.from(item.b64_json, 'base64'),
@@ -99,23 +98,23 @@ export async function handler(payload: SlackEvent) {
 						},
 						*/
 					});
-					await s3Key.promise();
-					const s3URL = await s3.getSignedUrlPromise('getObject', {
+					await s3_key.promise();
+					const s3_url = await s3.getSignedUrlPromise('getObject', {
 						Bucket: Bucket.images.bucketName,
 						Key: key,
 						Expires: 60 * 60 * 24 * 7,
 					});
 					blocks.push({
 						type: 'image',
-						image_url: s3URL,
-						alt_text: imagePrompt.groups.prompt,
+						image_url: s3_url,
+						alt_text: image_prompt.groups.prompt,
 					});
 				}
 				if (item?.url) {
 					blocks.push({
 						type: 'image',
 						image_url: item.url,
-						alt_text: imagePrompt.groups.prompt,
+						alt_text: image_prompt.groups.prompt,
 					});
 				}
 			}

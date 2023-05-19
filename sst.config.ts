@@ -2,7 +2,7 @@ import { SSTConfig } from 'sst';
 
 import { API } from './stacks/slack-bot';
 
-export default {
+const config: SSTConfig = {
 	config(_input) {
 		return {
 			name: 'chatgpt-slack-bot',
@@ -12,4 +12,6 @@ export default {
 	stacks(app) {
 		app.stack(API);
 	},
-} satisfies SSTConfig;
+};
+
+export default config;

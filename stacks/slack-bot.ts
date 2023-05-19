@@ -16,7 +16,7 @@ export function API({ stack }: StackContext) {
 			},
 		},
 		routes: {
-			'$default': 'packages/functions/src/webhook.handler',
+			$default: 'packages/functions/src/webhook.handler',
 		},
 	});
 
@@ -29,7 +29,7 @@ export function API({ stack }: StackContext) {
 	const SLACK_CONFIG = new Config.Secret(stack, 'SLACK_CONFIG');
 	const OPENAI_KEY = new Config.Secret(stack, 'OPENAI_KEY');
 
-	const gptJob = new SSTFunction(stack, 'gptJob', {
+	const gpt_job = new SSTFunction(stack, 'gptJob', {
 		handler: 'packages/functions/src/gpt.handler',
 		timeout: 30,
 		architecture: 'arm_64',
@@ -39,9 +39,9 @@ export function API({ stack }: StackContext) {
 			GPT_MODEL: process.env.GPT_MODEL || 'gpt-3.5-turbo',
 		},
 	});
-	gptJob.bind([SLACK_CONFIG, OPENAI_KEY, bucket]);
+	gpt_job.bind([SLACK_CONFIG, OPENAI_KEY, bucket]);
 
-	api.bind([SLACK_CONFIG, OPENAI_KEY, gptJob]);
+	api.bind([SLACK_CONFIG, OPENAI_KEY, gpt_job]);
 
 	stack.addOutputs({
 		ApiEndpoint: api.url,

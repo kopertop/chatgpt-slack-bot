@@ -3,4 +3,3 @@
  */
 
 export * from './slack-event';
-export * from './time';

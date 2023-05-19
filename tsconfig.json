@@ -1,16 +1,22 @@
 {
-	"extends": "@tsconfig/node16/tsconfig.json",
-	"include": [
-		"**/*.ts",
-		"*.ts",
-		".*.ts"
-	],
+	"extends": "@tsconfig/node18/tsconfig.json",
 	"compilerOptions": {
-		"esModuleInterop": true,
+		"types": [
+			"vitest/globals",
+		],
+		"module": "es6",
+		"allowJs": true,
 		"allowSyntheticDefaultImports": true,
+		"esModuleInterop": true,
+		"experimentalDecorators": true,
+		"moduleResolution": "node",
+		"target": "es6",
 		"skipDefaultLibCheck": true,
 		"skipLibCheck": true,
+		"strictNullChecks": false,
 		"noImplicitAny": false,
+		"baseUrl": ".",
+		"outDir": "./dist",
 		"paths": {
 			"@chatgpt-slack-bot/core/*": [
 				"./packages/core/src/*"

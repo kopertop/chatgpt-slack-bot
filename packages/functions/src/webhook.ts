@@ -4,7 +4,6 @@ import { Lambda } from 'aws-sdk';
 import { Config } from 'sst/node/config';
 import { Function as SSTFunction } from 'sst/node/function';
 
-
 const lambda = new Lambda();
 
 export async function handler(
@@ -20,12 +19,12 @@ export async function handler(
 			body: 'Missing body',
 		};
 	}
-	const slackConfig = JSON.parse(Config.SLACK_CONFIG);
+	const slack_config = JSON.parse(Config.SLACK_CONFIG);
 
 	// Verify the payload
 	try {
 		verifySlackRequest({
-			signingSecret: slackConfig.SIGNING_SECRET,
+			signingSecret: slack_config.SIGNING_SECRET,
 			body,
 			headers: event.headers as any,
 		});
@@ -49,7 +48,7 @@ export async function handler(
 			statusCode: 200,
 			body: payload.challenge,
 		};
-	} else if (payload.type === 'event_callback' && payload.event?.text) {
+	} if (payload.type === 'event_callback' && payload.event?.text) {
 		// Ignore bot-generated messages
 		if (payload.event.bot_id || payload.bot_id) {
 			console.log('Ignore bot generated message', payload.event);
