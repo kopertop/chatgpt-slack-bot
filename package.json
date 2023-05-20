@@ -5,6 +5,7 @@
 	"exports": "./index.js",
 	"type": "module",
 	"scripts": {
+		"test": "sst bind vitest run",
 		"dev": "sst dev",
 		"build": "sst build",
 		"deploy": "sst deploy",

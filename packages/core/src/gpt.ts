@@ -1,20 +1,22 @@
 import type { KnownBlock } from '@slack/bolt';
 import { initializeAgentExecutorWithOptions } from 'langchain/agents';
 import { ChatOpenAI } from 'langchain/chat_models/openai';
-import { BufferMemory } from 'langchain/memory';
-import { DynamoDBChatMessageHistory } from 'langchain/stores/message/dynamodb';
+import { BufferMemory, ChatMessageHistory } from 'langchain/memory';
+import { BaseChatMessage, SystemChatMessage } from 'langchain/schema';
 import { SerpAPI, Tool } from 'langchain/tools';
 import { AWSLambda } from 'langchain/tools/aws_lambda';
 import { Calculator } from 'langchain/tools/calculator';
 import { Config } from 'sst/node/config';
 import { Function as SSTFunction } from 'sst/node/function';
-import { Table } from 'sst/node/table';
 
 import type { SlackEvent } from './slack-event';
 
 const GPT_MODEL = process.env.GPT_MODEL || 'gpt-3.5-turbo';
+const SYSTEM_PROMPT = `You are a helpful Slack ChatBot.
 
-export async function gptHandler(payload: SlackEvent) {
+Your responses must be in Markdown format.`;
+
+export async function gptHandler(payload: SlackEvent, history?: BaseChatMessage[]) {
 	const model = new ChatOpenAI({
 		openAIApiKey: Config.OPENAI_KEY,
 		modelName: GPT_MODEL,
@@ -24,14 +26,7 @@ export async function gptHandler(payload: SlackEvent) {
 		temperature: 0.7,
 		topP: 1,
 	});
-	console.log('Session Store Table', Table.sessionStore);
-	const memory = new BufferMemory({
-		chatHistory: new DynamoDBChatMessageHistory({
-			tableName: Table.sessionStore.tableName,
-			partitionKey: 'id',
-			sessionId: payload.thread_ts,
-		}),
-	});
+
 	const tools: Tool[] = [
 		new Calculator(),
 	];
@@ -49,10 +44,21 @@ export async function gptHandler(payload: SlackEvent) {
 			functionName: SSTFunction.imageCreator.functionName,
 		}));
 	}
+
 	const executor = await initializeAgentExecutorWithOptions(tools, model, {
 		agentType: 'chat-conversational-react-description',
-		memory,
 	});
+	const chat_history: BaseChatMessage[] = [
+		new SystemChatMessage(SYSTEM_PROMPT),
+		...(history || []),
+	];
+	const memory = new BufferMemory({
+		chatHistory: new ChatMessageHistory(chat_history),
+		memoryKey: 'chat_history',
+		returnMessages: true,
+	});
+	executor.memory = memory;
+
 	// See: https://api.slack.com/reference/block-kit/blocks
 	const blocks: KnownBlock[] = [];
 	let text = '';

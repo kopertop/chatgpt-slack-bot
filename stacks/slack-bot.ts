@@ -3,7 +3,6 @@ import {
 	Config,
 	Function as SSTFunction,
 	StackContext,
-	Table,
 	use,
 } from 'sst/constructs';
 
@@ -24,12 +23,6 @@ export function API({ stack }: StackContext) {
 		},
 	});
 
-	const table = new Table(stack, 'sessionStore', {
-		fields: { id: 'string' },
-		primaryIndex: { partitionKey: 'id' },
-	});
-
-	// Secrets
 	const SLACK_CONFIG = new Config.Secret(stack, 'SLACK_CONFIG');
 	const SERPAPI_API_KEY = new Config.Secret(stack, 'SERPAPI_API_KEY');
 
@@ -48,7 +41,6 @@ export function API({ stack }: StackContext) {
 		SERPAPI_API_KEY,
 		SLACK_CONFIG,
 		image_creator,
-		table,
 	]);
 
 	api.bind([SLACK_CONFIG, gpt_job]);
