@@ -1,31 +1,20 @@
-import { App, KnownBlock } from '@slack/bolt';
+import type { KnownBlock } from '@slack/bolt';
+import { initializeAgentExecutorWithOptions } from 'langchain/agents';
 import { ChatOpenAI } from 'langchain/chat_models/openai';
-import {
-	AIChatMessage,
-	BaseChatMessage,
-	HumanChatMessage,
-	SystemChatMessage,
-} from 'langchain/schema';
-import fetch from 'node-fetch';
+import { BufferMemory } from 'langchain/memory';
+import { DynamoDBChatMessageHistory } from 'langchain/stores/message/dynamodb';
+import { SerpAPI, Tool } from 'langchain/tools';
+import { AWSLambda } from 'langchain/tools/aws_lambda';
+import { Calculator } from 'langchain/tools/calculator';
 import { Config } from 'sst/node/config';
+import { Function as SSTFunction } from 'sst/node/function';
 
-import { SlackEvent } from './slack-event';
+import type { SlackEvent } from './slack-event';
 
 const GPT_MODEL = process.env.GPT_MODEL || 'gpt-3.5-turbo';
-const SYSTEM_PROMPT = `You are a helpful assistant, running GPT Model ${GPT_MODEL}.
 
-Your responses are sent to Slack, always respond using Markdown formatting.
-
-For example, use *bold*, _italics_, \`code\`, and [links](https://example.com).`;
-
-export async function handler(payload: SlackEvent) {
-	const slack_config = JSON.parse(Config.SLACK_CONFIG);
-	const app = new App({
-		token: slack_config.BOT_TOKEN,
-		signingSecret: slack_config.SIGNING_SECRET,
-	});
-	const channel_id = payload.channel || payload.channel_id;
-	const chat = new ChatOpenAI({
+export async function gptHandler(payload: SlackEvent) {
+	const model = new ChatOpenAI({
 		openAIApiKey: Config.OPENAI_KEY,
 		modelName: GPT_MODEL,
 		frequencyPenalty: 0.1,
@@ -34,80 +23,59 @@ export async function handler(payload: SlackEvent) {
 		temperature: 0.7,
 		topP: 1,
 	});
-	const messages: BaseChatMessage[] = [
-		new SystemChatMessage(SYSTEM_PROMPT),
+	const memory = new BufferMemory({
+		chatHistory: new DynamoDBChatMessageHistory({
+			tableName: 'langchain',
+			partitionKey: 'id',
+			sessionId: payload.thread_ts,
+		}),
+	});
+	const tools: Tool[] = [
+		new SerpAPI(process.env.SERPAPI_API_KEY, {
+			location: 'Columbus,Ohio,United States',
+			hl: 'en',
+			gl: 'us',
+		}),
+		new Calculator(),
 	];
-	if (payload.thread_ts && channel_id) {
-		const result = await app.client.conversations.replies({
-			channel: channel_id,
-			ts: payload.thread_ts,
-		});
-		for (const message of result.messages || []) {
-			if (message.text) {
-				if (message.bot_id) {
-					messages.push(new AIChatMessage(message.text));
-				} else {
-					messages.push(new HumanChatMessage(message.text));
-				}
-			}
-		}
+	if (SSTFunction.imageCreator) {
+		tools.push(new AWSLambda({
+			name: 'image-creator',
+			description: 'Creates a new image for the specified prompt. Returns a URL to the image.',
+			functionName: SSTFunction.imageCreator.functionName,
+		}));
 	}
-	if (payload.text) {
-		messages.push(new HumanChatMessage(payload.text));
-	}
-
+	const executor = await initializeAgentExecutorWithOptions(tools, model, {
+		agentType: 'chat-conversational-react-description',
+		memory,
+	});
 	// See: https://api.slack.com/reference/block-kit/blocks
 	const blocks: KnownBlock[] = [];
 	let text = '';
 
-	const completion = await chat.call(messages);
+	const result = await executor.call({
+		input: payload.text,
+	});
 
-	if (completion?.text) {
-		text += completion.text;
+	if (result?.output) {
+		text = result.output;
 		blocks.push({
 			type: 'section',
 			text: {
 				type: 'mrkdwn',
-				text: completion.text,
+				text: result.output,
 			},
 		});
 	}
-	/* TODO: Fix this
-	const tokens_used = chat.getTokensUsed();
-	if (completion?.usage?.total_tokens) {
+	if (result?.tokensUsed) {
 		blocks.push({
 			type: 'context',
 			elements: [{
 				type: 'mrkdwn',
-				text: `*Tokens used:* ${completion.data.usage.total_tokens}`,
+				text: `*Tokens used:* ${result.tokensUsed}`,
 			}],
 		});
 	}
-	*/
 
-	if (payload.response_url) {
-		await fetch(payload.response_url, {
-			method: 'POST',
-			headers: {
-				'Content-Type': 'application/json',
-			},
-			body: JSON.stringify({
-				replace_original: true,
-				blocks,
-			}),
-		});
-	} else if (payload.channel && payload.ts) {
-		try {
-			await app.client.chat.postMessage({
-				channel: payload.channel,
-				thread_ts: payload.ts,
-				text,
-				blocks,
-			});
-		} catch (e) {
-			console.error(e);
-		}
-	}
-
-	return blocks;
+	return { blocks, text };
 }

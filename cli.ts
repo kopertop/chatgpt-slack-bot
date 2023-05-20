@@ -1,12 +1,18 @@
 import { initializeAgentExecutorWithOptions } from 'langchain/agents';
-import { OpenAI } from 'langchain/llms/openai';
+import { ChatOpenAI } from 'langchain/chat_models/openai';
 import { SerpAPI } from 'langchain/tools';
+import { AWSLambda } from 'langchain/tools/aws_lambda';
 import { Calculator } from 'langchain/tools/calculator';
 
 const GPT_MODEL = process.env.GPT_MODEL || 'gpt-3.5-turbo';
+const SYSTEM_PROMPT = `You are a helpful assistant, running GPT Model ${GPT_MODEL}.
+
+Your responses are sent to Slack, always respond using Markdown formatting.
+
+For example, use *bold*, _italics_, \`code\`, and [links](https://example.com).`;
 
 async function main(input: string) {
-	const model = new OpenAI({
+	const model = new ChatOpenAI({
 		openAIApiKey: process.env.OPENAI_KEY,
 		modelName: GPT_MODEL,
 		frequencyPenalty: 0.1,
@@ -22,11 +28,14 @@ async function main(input: string) {
 			gl: 'us',
 		}),
 		new Calculator(),
+		new AWSLambda({
+			name: 'image-creator',
+			description: 'Creates a new image for the specified prompt. Returns a URL to the image.',
+			functionName: 'chatbot-image-creator-prod',
+		}),
 	];
 
-	const executor = await initializeAgentExecutorWithOptions(tools, model, {
-		agentType: 'zero-shot-react-description',
-	});
+	const executor = await initializeAgentExecutorWithOptions(tools, model);
 	console.log('Loaded agent.');
 
 	console.log(`Executing with input "${input}"...`);

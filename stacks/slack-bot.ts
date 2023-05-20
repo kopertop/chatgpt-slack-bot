@@ -1,12 +1,15 @@
 import {
 	Api,
-	Bucket,
 	Config,
 	Function as SSTFunction,
 	StackContext,
+	use,
 } from 'sst/constructs';
 
+import { GPTFunctions } from './gpt-functions';
+
 export function API({ stack }: StackContext) {
+	const { bucket, image_creator, OPENAI_KEY } = use(GPTFunctions);
 	const api = new Api(stack, 'api', {
 		defaults: {
 			function: {
@@ -20,14 +23,8 @@ export function API({ stack }: StackContext) {
 		},
 	});
 
-	// S3 Bucket for storing images
-	const bucket = new Bucket(stack, 'images', {
-		cors: true,
-	});
-
 	// Secrets
 	const SLACK_CONFIG = new Config.Secret(stack, 'SLACK_CONFIG');
-	const OPENAI_KEY = new Config.Secret(stack, 'OPENAI_KEY');
 
 	const gpt_job = new SSTFunction(stack, 'gptJob', {
 		handler: 'packages/functions/src/gpt.handler',
@@ -39,7 +36,7 @@ export function API({ stack }: StackContext) {
 			GPT_MODEL: process.env.GPT_MODEL || 'gpt-3.5-turbo',
 		},
 	});
-	gpt_job.bind([SLACK_CONFIG, OPENAI_KEY, bucket]);
+	gpt_job.bind([SLACK_CONFIG, OPENAI_KEY, bucket, image_creator]);
 
 	api.bind([SLACK_CONFIG, OPENAI_KEY, gpt_job]);
 

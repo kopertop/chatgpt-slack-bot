@@ -1,5 +1,6 @@
 import { SSTConfig } from 'sst';
 
+import { GPTFunctions } from './stacks/gpt-functions';
 import { API } from './stacks/slack-bot';
 
 const config: SSTConfig = {
@@ -10,6 +11,7 @@ const config: SSTConfig = {
 		};
 	},
 	stacks(app) {
+		app.stack(GPTFunctions);
 		app.stack(API);
 	},
 };
