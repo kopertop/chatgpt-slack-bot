@@ -44,6 +44,7 @@
 		"node": ">=18"
 	},
 	"dependencies": {
-		"langchain": "^0.0.78"
+		"langchain": "^0.0.78",
+		"serpapi": "^1.1.1"
 	}
 }

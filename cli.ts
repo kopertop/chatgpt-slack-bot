@@ -1,15 +1,12 @@
-import { ChatOpenAI } from 'langchain/chat_models/openai';
-import { BaseChatMessage, HumanChatMessage, SystemChatMessage } from 'langchain/schema';
+import { initializeAgentExecutorWithOptions } from 'langchain/agents';
+import { OpenAI } from 'langchain/llms/openai';
+import { SerpAPI } from 'langchain/tools';
+import { Calculator } from 'langchain/tools/calculator';
 
 const GPT_MODEL = process.env.GPT_MODEL || 'gpt-3.5-turbo';
-const SYSTEM_PROMPT = `You are a helpful assistant, running GPT Model ${GPT_MODEL}.
 
-Your responses are sent to Slack, always respond using Markdown formatting.
-
-For example, use *bold*, _italics_, \`code\`, and [links](https://example.com).`;
-
-export async function main(message: string) {
-	const chat = new ChatOpenAI({
+async function main(input: string) {
+	const model = new OpenAI({
 		openAIApiKey: process.env.OPENAI_KEY,
 		modelName: GPT_MODEL,
 		frequencyPenalty: 0.1,
@@ -18,14 +15,26 @@ export async function main(message: string) {
 		temperature: 0.7,
 		topP: 1,
 	});
-	const messages: BaseChatMessage[] = [
-		new SystemChatMessage(SYSTEM_PROMPT),
+	const tools = [
+		new SerpAPI(process.env.SERPAPI_API_KEY, {
+			location: 'Columbus,Ohio,United States',
+			hl: 'en',
+			gl: 'us',
+		}),
+		new Calculator(),
 	];
-	if (message) {
-		messages.push(new HumanChatMessage(message));
-	}
 
-	const resp = await chat.call(messages);
-	console.log(JSON.stringify(resp, null, 2));
+	const executor = await initializeAgentExecutorWithOptions(tools, model, {
+		agentType: 'zero-shot-react-description',
+	});
+	console.log('Loaded agent.');
+
+	console.log(`Executing with input "${input}"...`);
+
+	const result = await executor.call({ input });
+	console.log(JSON.stringify(result, null, 2));
+
+	console.log(`Got output ${result.output}`);
+	console.log(`Cost Tokens: ${result.tokensUsed}`);
 }
 main(process.argv[2]);
