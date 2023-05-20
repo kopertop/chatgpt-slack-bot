@@ -24,6 +24,7 @@ export async function gptHandler(payload: SlackEvent) {
 		temperature: 0.7,
 		topP: 1,
 	});
+	console.log('Session Store Table', Table.sessionStore);
 	const memory = new BufferMemory({
 		chatHistory: new DynamoDBChatMessageHistory({
 			tableName: Table.sessionStore.tableName,
