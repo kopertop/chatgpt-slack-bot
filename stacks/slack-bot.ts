@@ -3,13 +3,14 @@ import {
 	Config,
 	Function as SSTFunction,
 	StackContext,
+	Table,
 	use,
 } from 'sst/constructs';
 
 import { GPTFunctions } from './gpt-functions';
 
 export function API({ stack }: StackContext) {
-	const { bucket, image_creator, OPENAI_KEY } = use(GPTFunctions);
+	const { image_creator, OPENAI_KEY } = use(GPTFunctions);
 	const api = new Api(stack, 'api', {
 		defaults: {
 			function: {
@@ -23,8 +24,14 @@ export function API({ stack }: StackContext) {
 		},
 	});
 
+	const table = new Table(stack, 'sessionStore', {
+		fields: { id: 'string' },
+		primaryIndex: { partitionKey: 'id' },
+	});
+
 	// Secrets
 	const SLACK_CONFIG = new Config.Secret(stack, 'SLACK_CONFIG');
+	const SERPAPI_API_KEY = new Config.Secret(stack, 'SERPAPI_API_KEY');
 
 	const gpt_job = new SSTFunction(stack, 'gptJob', {
 		handler: 'packages/functions/src/gpt.handler',
@@ -36,15 +43,15 @@ export function API({ stack }: StackContext) {
 			GPT_MODEL: process.env.GPT_MODEL || 'gpt-3.5-turbo',
 		},
 	});
-	gpt_job.bind([SLACK_CONFIG, OPENAI_KEY, bucket, image_creator]);
+	gpt_job.bind([
+		OPENAI_KEY,
+		SERPAPI_API_KEY,
+		SLACK_CONFIG,
+		image_creator,
+		table,
+	]);
 
-	api.bind([SLACK_CONFIG, OPENAI_KEY, gpt_job]);
+	api.bind([SLACK_CONFIG, gpt_job]);
 
-	stack.addOutputs({
-		ApiEndpoint: api.url,
-	});
-
-	return {
-		apiEndpoint: api.url,
-	};
+	return { api };
 }

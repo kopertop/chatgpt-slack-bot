@@ -8,6 +8,7 @@ import { AWSLambda } from 'langchain/tools/aws_lambda';
 import { Calculator } from 'langchain/tools/calculator';
 import { Config } from 'sst/node/config';
 import { Function as SSTFunction } from 'sst/node/function';
+import { Table } from 'sst/node/table';
 
 import type { SlackEvent } from './slack-event';
 
@@ -25,7 +26,7 @@ export async function gptHandler(payload: SlackEvent) {
 	});
 	const memory = new BufferMemory({
 		chatHistory: new DynamoDBChatMessageHistory({
-			tableName: 'langchain',
+			tableName: Table.sessionStore.tableName,
 			partitionKey: 'id',
 			sessionId: payload.thread_ts,
 		}),
@@ -34,7 +35,7 @@ export async function gptHandler(payload: SlackEvent) {
 		new Calculator(),
 	];
 	if (Config.SERPAPI_API_KEY) {
-		tools.push(new SerpAPI(process.env.SERPAPI_API_KEY, {
+		tools.push(new SerpAPI(Config.SERPAPI_API_KEY, {
 			location: 'Columbus,Ohio,United States',
 			hl: 'en',
 			gl: 'us',

@@ -27,9 +27,5 @@ export function GPTFunctions({ stack }: StackContext) {
 	});
 	image_creator.bind([OPENAI_KEY, bucket]);
 
-	stack.addOutputs({
-		imageCreator: image_creator.functionName,
-	});
-
 	return { bucket, image_creator, OPENAI_KEY };
 }
