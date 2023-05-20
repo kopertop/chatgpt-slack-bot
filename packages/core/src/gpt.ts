@@ -31,13 +31,15 @@ export async function gptHandler(payload: SlackEvent) {
 		}),
 	});
 	const tools: Tool[] = [
-		new SerpAPI(process.env.SERPAPI_API_KEY, {
+		new Calculator(),
+	];
+	if (Config.SERPAPI_API_KEY) {
+		tools.push(new SerpAPI(process.env.SERPAPI_API_KEY, {
 			location: 'Columbus,Ohio,United States',
 			hl: 'en',
 			gl: 'us',
-		}),
-		new Calculator(),
-	];
+		}));
+	}
 	if (SSTFunction.imageCreator) {
 		tools.push(new AWSLambda({
 			name: 'image-creator',
