@@ -28,7 +28,8 @@ export function API({ stack }: StackContext) {
 
 	const gpt_job = new SSTFunction(stack, 'gptJob', {
 		handler: 'packages/functions/src/gpt.handler',
-		timeout: 30,
+		memorySize: 2048,
+		timeout: 120,
 		architecture: 'arm_64',
 		runtime: 'nodejs18.x',
 		environment: {

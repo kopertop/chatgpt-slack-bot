@@ -30,6 +30,7 @@ export async function handler(payload: SlackEvent) {
 					Key: key,
 					Body: Buffer.from(item.b64_json, 'base64'),
 					ContentType: 'image/png',
+					ACL: 'public-read',
 					/* TODO: Make this work after normalizing the prompt
 					Metadata: {
 						'X-OpenAI-Prompt': imagePrompt.groups.prompt,

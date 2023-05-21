@@ -15,7 +15,7 @@ describe('gptHandler', () => {
 			console.log('InvokeCommand', Buffer.from(input.Payload, 'base64').toString());
 			return Promise.resolve({
 				StatusCode: 200,
-				Payload: Buffer.from(JSON.stringify({ body: 'https://example.com/foo.png' })),
+				Payload: new TextEncoder().encode(JSON.stringify({ body: 'https://example.com/foo.png' })),
 			});
 		});
 	});

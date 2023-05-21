@@ -46,6 +46,7 @@ export async function gptHandler(payload: SlackEvent, history?: BaseChatMessage[
 				'Output is a URL for the image.',
 			].join(' '),
 			func: async (input: string) => {
+				console.log(`Requesting image for "${input}"`);
 				const lambda_resp = await new LambdaClient({}).send(new InvokeCommand({
 					FunctionName: SSTFunction.imageCreator.functionName,
 					Payload: Buffer.from(JSON.stringify({
@@ -53,7 +54,7 @@ export async function gptHandler(payload: SlackEvent, history?: BaseChatMessage[
 						text: input,
 					})),
 				}));
-				const body = lambda_resp.Payload?.toString();
+				const { body } = JSON.parse(new TextDecoder().decode(lambda_resp.Payload));
 				console.log('Lambda Response', body);
 				return body;
 			},
@@ -74,6 +75,7 @@ export async function gptHandler(payload: SlackEvent, history?: BaseChatMessage[
 
 	const executor = await initializeAgentExecutorWithOptions(tools, model, {
 		agentType: 'chat-conversational-react-description',
+		verbose: process.env.VERBBOSE === 'true',
 	});
 	const chat_history: BaseChatMessage[] = [
 		// new SystemChatMessage(SYSTEM_PROMPT),
