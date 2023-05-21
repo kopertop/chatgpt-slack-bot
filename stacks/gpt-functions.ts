@@ -1,3 +1,4 @@
+import { RemovalPolicy } from 'aws-cdk-lib';
 import {
 	Bucket,
 	Config,
@@ -18,6 +19,9 @@ export function GPTFunctions({ stack }: StackContext) {
 					ignorePublicAcls: false,
 					restrictPublicBuckets: false,
 				},
+				// Delete this bucket when the stack is deleted
+				autoDeleteObjects: true,
+				removalPolicy: RemovalPolicy.DESTROY,
 			},
 		},
 	});
