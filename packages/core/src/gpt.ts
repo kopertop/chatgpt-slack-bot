@@ -1,10 +1,10 @@
+import { InvokeCommand, LambdaClient } from '@aws-sdk/client-lambda';
 import type { KnownBlock } from '@slack/bolt';
 import { initializeAgentExecutorWithOptions } from 'langchain/agents';
 import { ChatOpenAI } from 'langchain/chat_models/openai';
 import { BufferMemory, ChatMessageHistory } from 'langchain/memory';
-import { BaseChatMessage, SystemChatMessage } from 'langchain/schema';
-import { SerpAPI, Tool } from 'langchain/tools';
-import { AWSLambda } from 'langchain/tools/aws_lambda';
+import { BaseChatMessage } from 'langchain/schema';
+import { DynamicTool, SerpAPI, Tool } from 'langchain/tools';
 import { Calculator } from 'langchain/tools/calculator';
 import { Config } from 'sst/node/config';
 import { Function as SSTFunction } from 'sst/node/function';
@@ -20,10 +20,10 @@ export async function gptHandler(payload: SlackEvent, history?: BaseChatMessage[
 	const model = new ChatOpenAI({
 		openAIApiKey: Config.OPENAI_KEY,
 		modelName: GPT_MODEL,
-		frequencyPenalty: 0.1,
+		frequencyPenalty: 0,
 		maxTokens: 512,
 		presencePenalty: 0,
-		temperature: 0.7,
+		temperature: 0,
 		topP: 1,
 	});
 
@@ -38,18 +38,45 @@ export async function gptHandler(payload: SlackEvent, history?: BaseChatMessage[
 		}));
 	}
 	if (SSTFunction.imageCreator) {
+		tools.push(new DynamicTool({
+			name: 'image-creator',
+			description: [
+				'Creates a new image.',
+				'Input should be a string describing the image to create.',
+				'Output is a URL for the image.',
+			].join(' '),
+			func: async (input: string) => {
+				const lambda_resp = await new LambdaClient({}).send(new InvokeCommand({
+					FunctionName: SSTFunction.imageCreator.functionName,
+					Payload: Buffer.from(JSON.stringify({
+						...payload,
+						text: input,
+					})),
+				}));
+				const body = lambda_resp.Payload?.toString();
+				console.log('Lambda Response', body);
+				return body;
+			},
+		}));
+
+		/*
 		tools.push(new AWSLambda({
 			name: 'image-creator',
-			description: 'Creates a new image for the specified prompt. Returns a URL to the image.',
+			description: [
+				'Creates a new image.',
+				'Input should be a string describing the image to create.',
+				'Output is a URL for the image.',
+			].join(' '),
 			functionName: SSTFunction.imageCreator.functionName,
 		}));
+		*/
 	}
 
 	const executor = await initializeAgentExecutorWithOptions(tools, model, {
 		agentType: 'chat-conversational-react-description',
 	});
 	const chat_history: BaseChatMessage[] = [
-		new SystemChatMessage(SYSTEM_PROMPT),
+		// new SystemChatMessage(SYSTEM_PROMPT),
 		...(history || []),
 	];
 	const memory = new BufferMemory({

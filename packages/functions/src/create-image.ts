@@ -42,10 +42,10 @@ export async function handler(payload: SlackEvent) {
 					Key: key,
 					Expires: 60 * 60 * 24 * 7,
 				});
-				return s3_url;
+				return { body: s3_url };
 			}
 			if (item?.url) {
-				return item.url;
+				return { body: item.url };
 			}
 		}
 	}
